@@ -1,0 +1,367 @@
+{
+  "generatedAt": "2026-02-12T17:36:48.078Z",
+  "source": "references/strudel-songs-collection",
+  "count": 72,
+  "songs": [
+    {
+      "id": "acertainbuzz",
+      "title": "Acertainbuzz",
+      "path": "songs/acertainbuzz.js"
+    },
+    {
+      "id": "ameliewaltz",
+      "title": "Ameliewaltz",
+      "path": "songs/ameliewaltz.js"
+    },
+    {
+      "id": "anniesroom",
+      "title": "Anniesroom",
+      "path": "songs/anniesroom.js"
+    },
+    {
+      "id": "appealingtovenus",
+      "title": "Appealingtovenus",
+      "path": "songs/appealingtovenus.js"
+    },
+    {
+      "id": "aztecchallenge",
+      "title": "Aztecchallenge",
+      "path": "songs/aztecchallenge.js"
+    },
+    {
+      "id": "bennington",
+      "title": "Bennington",
+      "path": "songs/bennington.js"
+    },
+    {
+      "id": "bigship",
+      "title": "Bigship",
+      "path": "songs/bigship.js"
+    },
+    {
+      "id": "bluemonday",
+      "title": "Bluemonday",
+      "path": "songs/bluemonday.js"
+    },
+    {
+      "id": "bonespurs",
+      "title": "Bonespurs",
+      "path": "songs/bonespurs.js"
+    },
+    {
+      "id": "breakfastline",
+      "title": "Breakfastline",
+      "path": "songs/breakfastline.js"
+    },
+    {
+      "id": "budsandspawn",
+      "title": "Budsandspawn",
+      "path": "songs/budsandspawn.js"
+    },
+    {
+      "id": "bugfromheaven",
+      "title": "Bugfromheaven",
+      "path": "songs/bugfromheaven.js"
+    },
+    {
+      "id": "bustybeez",
+      "title": "Bustybeez",
+      "path": "songs/bustybeez.js"
+    },
+    {
+      "id": "byebyespirit",
+      "title": "Byebyespirit",
+      "path": "songs/byebyespirit.js"
+    },
+    {
+      "id": "cabinet",
+      "title": "Cabinet",
+      "path": "songs/cabinet.js"
+    },
+    {
+      "id": "cadenza",
+      "title": "Cadenza",
+      "path": "songs/cadenza.js"
+    },
+    {
+      "id": "cinghiale",
+      "title": "Cinghiale",
+      "path": "songs/cinghiale.js"
+    },
+    {
+      "id": "clandeisiciliani",
+      "title": "Clandeisiciliani",
+      "path": "songs/clandeisiciliani.js"
+    },
+    {
+      "id": "clubbed",
+      "title": "Clubbed",
+      "path": "songs/clubbed.js"
+    },
+    {
+      "id": "disto",
+      "title": "Disto",
+      "path": "songs/disto.js"
+    },
+    {
+      "id": "edenontheair",
+      "title": "Edenontheair",
+      "path": "songs/edenontheair.js"
+    },
+    {
+      "id": "elpueblo",
+      "title": "Elpueblo",
+      "path": "songs/elpueblo.js"
+    },
+    {
+      "id": "epicbiopic",
+      "title": "Epicbiopic",
+      "path": "songs/epicbiopic.js"
+    },
+    {
+      "id": "eversoclosely",
+      "title": "Eversoclosely",
+      "path": "songs/eversoclosely.js"
+    },
+    {
+      "id": "feeling37",
+      "title": "Feeling37",
+      "path": "songs/feeling37.js"
+    },
+    {
+      "id": "framartinocoldplayaro",
+      "title": "Framartinocoldplayaro",
+      "path": "songs/framartinocoldplayaro.js"
+    },
+    {
+      "id": "happybirthday",
+      "title": "Happybirthday",
+      "path": "songs/happybirthday.js"
+    },
+    {
+      "id": "happybirthdayramones",
+      "title": "Happybirthdayramones",
+      "path": "songs/happybirthdayramones.js"
+    },
+    {
+      "id": "heymoon",
+      "title": "Heymoon",
+      "path": "songs/heymoon.js"
+    },
+    {
+      "id": "humanperformance",
+      "title": "Humanperformance",
+      "path": "songs/humanperformance.js"
+    },
+    {
+      "id": "ilredelmondo",
+      "title": "Ilredelmondo",
+      "path": "songs/ilredelmondo.js"
+    },
+    {
+      "id": "jitterbug",
+      "title": "Jitterbug",
+      "path": "songs/jitterbug.js"
+    },
+    {
+      "id": "jitterbugreverse",
+      "title": "Jitterbugreverse",
+      "path": "songs/jitterbugreverse.js"
+    },
+    {
+      "id": "lovegoeson",
+      "title": "Lovegoeson",
+      "path": "songs/lovegoeson.js"
+    },
+    {
+      "id": "madeallup",
+      "title": "Madeallup",
+      "path": "songs/madeallup.js"
+    },
+    {
+      "id": "magicandecstasy",
+      "title": "Magicandecstasy",
+      "path": "songs/magicandecstasy.js"
+    },
+    {
+      "id": "mammalschilling",
+      "title": "Mammalschilling",
+      "path": "songs/mammalschilling.js"
+    },
+    {
+      "id": "mouthbreather",
+      "title": "Mouthbreather",
+      "path": "songs/mouthbreather.js"
+    },
+    {
+      "id": "mouthbreathercomplex",
+      "title": "Mouthbreathercomplex",
+      "path": "songs/mouthbreathercomplex.js"
+    },
+    {
+      "id": "nudelimprov1",
+      "title": "Nudelimprov1",
+      "path": "songs/nudelimprov1.js"
+    },
+    {
+      "id": "oddeven",
+      "title": "Oddeven",
+      "path": "songs/oddeven.js"
+    },
+    {
+      "id": "oh",
+      "title": "Oh",
+      "path": "songs/oh.js"
+    },
+    {
+      "id": "oldmacdonald",
+      "title": "Oldmacdonald",
+      "path": "songs/oldmacdonald.js"
+    },
+    {
+      "id": "omalley",
+      "title": "Omalley",
+      "path": "songs/omalley.js"
+    },
+    {
+      "id": "pumpupthejam",
+      "title": "Pumpupthejam",
+      "path": "songs/pumpupthejam.js"
+    },
+    {
+      "id": "pyramidsong",
+      "title": "Pyramidsong",
+      "path": "songs/pyramidsong.js"
+    },
+    {
+      "id": "rhythmofthenight",
+      "title": "Rhythmofthenight",
+      "path": "songs/rhythmofthenight.js"
+    },
+    {
+      "id": "satiesfaction",
+      "title": "Satiesfaction",
+      "path": "songs/satiesfaction.js"
+    },
+    {
+      "id": "shanghai",
+      "title": "Shanghai",
+      "path": "songs/shanghai.js"
+    },
+    {
+      "id": "shedontusejelly",
+      "title": "Shedontusejelly",
+      "path": "songs/shedontusejelly.js"
+    },
+    {
+      "id": "stacktricks",
+      "title": "Stacktricks",
+      "path": "songs/stacktricks.js"
+    },
+    {
+      "id": "strangerthings",
+      "title": "Strangerthings",
+      "path": "songs/strangerthings.js"
+    },
+    {
+      "id": "strudelman",
+      "title": "Strudelman",
+      "path": "songs/strudelman.js"
+    },
+    {
+      "id": "strudelwall",
+      "title": "Strudelwall",
+      "path": "songs/strudelwall.js"
+    },
+    {
+      "id": "strumtest1",
+      "title": "Strumtest1",
+      "path": "songs/strumtest1.js"
+    },
+    {
+      "id": "strumtest2",
+      "title": "Strumtest2",
+      "path": "songs/strumtest2.js"
+    },
+    {
+      "id": "strumtest3",
+      "title": "Strumtest3",
+      "path": "songs/strumtest3.js"
+    },
+    {
+      "id": "swimandsleep",
+      "title": "Swimandsleep",
+      "path": "songs/swimandsleep.js"
+    },
+    {
+      "id": "swimmingsnake",
+      "title": "Swimmingsnake",
+      "path": "songs/swimmingsnake.js"
+    },
+    {
+      "id": "tablaturetest",
+      "title": "Tablaturetest",
+      "path": "songs/tablaturetest.js"
+    },
+    {
+      "id": "tarantella",
+      "title": "Tarantella",
+      "path": "songs/tarantella.js"
+    },
+    {
+      "id": "threefriends",
+      "title": "Threefriends",
+      "path": "songs/threefriends.js"
+    },
+    {
+      "id": "togooffandthings",
+      "title": "Togooffandthings",
+      "path": "songs/togooffandthings.js"
+    },
+    {
+      "id": "ventocaldo",
+      "title": "Ventocaldo",
+      "path": "songs/ventocaldo.js"
+    },
+    {
+      "id": "verminmangle",
+      "title": "Verminmangle",
+      "path": "songs/verminmangle.js"
+    },
+    {
+      "id": "veronicainecstasy",
+      "title": "Veronicainecstasy",
+      "path": "songs/veronicainecstasy.js"
+    },
+    {
+      "id": "veronicazigzag",
+      "title": "Veronicazigzag",
+      "path": "songs/veronicazigzag.js"
+    },
+    {
+      "id": "vine",
+      "title": "Vine",
+      "path": "songs/vine.js"
+    },
+    {
+      "id": "waltzno2",
+      "title": "Waltzno2",
+      "path": "songs/waltzno2.js"
+    },
+    {
+      "id": "warsaw",
+      "title": "Warsaw",
+      "path": "songs/warsaw.js"
+    },
+    {
+      "id": "whydoesmybrain",
+      "title": "Whydoesmybrain",
+      "path": "songs/whydoesmybrain.js"
+    },
+    {
+      "id": "woodeneye",
+      "title": "Woodeneye",
+      "path": "songs/woodeneye.js"
+    }
+  ]
+}
