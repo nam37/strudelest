@@ -62,6 +62,20 @@ function pickWeightedPattern(rng: () => number, items: PatternOption[]): string 
   return items[items.length - 1].value;
 }
 
+function quantize(value: number, step: number): number {
+  if (!Number.isFinite(value) || step <= 0) {
+    return value;
+  }
+  return Math.round(value / step) * step;
+}
+
+function formatNumber(value: number): string {
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+  return value.toFixed(3).replace(/\.?0+$/, "");
+}
+
 function renderLayer(
   layer: LayerRule,
   pattern: string,
@@ -69,9 +83,10 @@ function renderLayer(
   runtime: RuntimeOverrides
 ): string {
   const gain = Number.isFinite(base.gain) ? Number(base.gain) : 0.7;
+  const gainValue = quantize(gain, 0.05);
   const swingValue = runtime.groove?.swing;
   const swingLayers = runtime.groove?.layers;
-  const swingSubdivision = runtime.groove?.subdivision ?? 4;
+  const swingSubdivision = Math.max(1, Math.round(runtime.groove?.subdivision ?? 4));
   const shouldSwing =
     typeof swingValue === "number" &&
     Number.isFinite(swingValue) &&
@@ -80,29 +95,29 @@ function renderLayer(
 
   if (layer.render.type === "drums") {
     let expr = `s(${JSON.stringify(pattern)})`;
-    expr += `.gain(${gain.toFixed(3)})`;
+    expr += `.gain(${formatNumber(gainValue)})`;
     if (base.slow !== undefined) {
-      expr += `.slow(${base.slow})`;
+      expr += `.slow(${formatNumber(quantize(base.slow, 0.25))})`;
     }
     if (base.fast !== undefined) {
-      expr += `.fast(${base.fast})`;
+      expr += `.fast(${formatNumber(quantize(base.fast, 0.02))})`;
     }
     if (shouldSwing) {
-      expr += `.swingBy(${swingValue.toFixed(3)}, ${swingSubdivision})`;
+      expr += `.swingBy(${formatNumber(quantize(swingValue, 0.02))}, ${swingSubdivision})`;
     }
     return expr;
   }
 
   let expr = `note(${JSON.stringify(pattern)}).s(${JSON.stringify(layer.render.instrument)})`;
-  expr += `.gain(${gain.toFixed(3)})`;
+  expr += `.gain(${formatNumber(gainValue)})`;
   if (base.slow !== undefined) {
-    expr += `.slow(${base.slow})`;
+    expr += `.slow(${formatNumber(quantize(base.slow, 0.25))})`;
   }
   if (base.fast !== undefined) {
-    expr += `.fast(${base.fast})`;
+    expr += `.fast(${formatNumber(quantize(base.fast, 0.02))})`;
   }
   if (shouldSwing) {
-    expr += `.swingBy(${swingValue.toFixed(3)}, ${swingSubdivision})`;
+    expr += `.swingBy(${formatNumber(quantize(swingValue, 0.02))}, ${swingSubdivision})`;
   }
   return expr;
 }
@@ -304,21 +319,26 @@ export function buildCode(template: TemplateDefinition, input: BuildInput): stri
         pattern = layer.patterns[phase.phaseIndex % layer.patterns.length].value;
       }
       const mergedBase = mergeLayerBase(layer, phase, runtime);
-      lines.push(`  ${renderLayer(layer, pattern, mergedBase, runtime)}`);
+      lines.push(`    ${renderLayer(layer, pattern, mergedBase, runtime)}`);
     }
 
     if (lines.length === 0) {
       return `silence.slow(${spanBars})`;
     }
-    return `stack(\n${lines.join(",\n")}\n).slow(${spanBars})`;
+    return `stack(\n${lines.join(",\n")}\n  ).slow(${spanBars})`;
   });
 
   if (phaseExprs.length === 0) {
     phaseExprs.push(`silence.slow(${bars})`);
   }
 
+  const phaseBlocks = phases.map((phase, index) => {
+    const label = phase.gap ? `GAP ${phase.start}-${phase.end}` : `PHASE ${phase.id} ${phase.start}-${phase.end}`;
+    return `// ${index + 1}. ${label}\n  ${phaseExprs[index]}`;
+  });
+
   return `setcps(${cps});
 cat(
-  ${phaseExprs.join(",\n  ")}
+  ${phaseBlocks.join(",\n  ")}
 )`;
 }

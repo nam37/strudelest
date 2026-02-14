@@ -276,7 +276,7 @@ function App(): JSX.Element {
 
   const onPlay = async (): Promise<void> => {
     if (!isDockSynced || !pushedCode) {
-      setStatus("Push To Studel Dock before playing.");
+      setStatus("Push To Strudel Dock before playing.");
       return;
     }
     try {
@@ -506,7 +506,7 @@ function App(): JSX.Element {
     setStatus(`Loaded ${piece.name}`);
   };
 
-  const onPushToStudelDock = async (): Promise<void> => {
+  const onPushToStrudelDock = async (): Promise<void> => {
     if (!codeDraft.trim()) {
       setStatus("Nothing to push.");
       return;
@@ -526,7 +526,7 @@ function App(): JSX.Element {
           // ignore in non-browser test environments
         }
       }
-      setStatus("Pushed To Studel Dock.");
+      setStatus("Pushed To Strudel Dock.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Push failed";
       setStatus(message);
@@ -545,7 +545,7 @@ function App(): JSX.Element {
         rows={16}
       />
       <div className="row">
-        <button onClick={() => void onPushToStudelDock()}>Push To Studel Dock</button>
+        <button onClick={() => void onPushToStrudelDock()}>Push To Strudel Dock</button>
       </div>
       <p className="dock-note">
         Dock Sync: {isDockSynced ? "ready" : "not pushed"}
@@ -915,7 +915,7 @@ function App(): JSX.Element {
                 <h2>Tips</h2>
                 <ul className="section-list">
                   <li>Re-import after changing quantize settings.</li>
-                  <li>Use Push To Studel Dock before playing in Strudel Dock.</li>
+                  <li>Use Push To Strudel Dock before playing in Strudel Dock.</li>
                 </ul>
               </aside>
             </div>

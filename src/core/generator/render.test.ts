@@ -146,7 +146,7 @@ describe("rules renderer", () => {
       })
     };
     const code = buildCode(template, { bpm: 120, bars: 1, params: {}, seed: "seed-x" });
-    expect(code).toContain(".gain(0.400)");
+    expect(code).toContain(".gain(0.4)");
   });
 
   it("uses runtime variation override for rotatePatterns", () => {
@@ -212,7 +212,7 @@ describe("rules renderer", () => {
       })
     };
     const code = buildCode(template, { bpm: 120, bars: 1, params: {}, seed: "seed-x" });
-    expect(code).toContain('s("hh*8").gain(0.300).swingBy(0.330, 4)');
-    expect(code).toContain('s("bd*2").gain(0.400)');
+    expect(code).toContain('s("hh*8").gain(0.3).swingBy(0.34, 4)');
+    expect(code).toContain('s("bd*2").gain(0.4)');
   });
 });

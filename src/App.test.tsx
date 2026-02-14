@@ -279,7 +279,7 @@ describe("App shell", () => {
     await user.click(screen.getByRole("tab", { name: "Strudel Dock" }));
     expect(screen.getByRole("button", { name: "Play" })).toBeDisabled();
     await user.click(screen.getByRole("tab", { name: "Generator" }));
-    await user.click(screen.getByRole("button", { name: "Push To Studel Dock" }));
+    await user.click(screen.getByRole("button", { name: "Push To Strudel Dock" }));
     await user.click(screen.getByRole("button", { name: "Play" }));
     await user.click(screen.getByRole("button", { name: "Stop" }));
 

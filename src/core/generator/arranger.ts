@@ -35,8 +35,9 @@ const LENGTH_TO_BARS: Record<LengthPreset, number> = {
   xl: 128
 };
 
-const SECTION_ENERGY = [0.55, 0.75, 1, 0.7, 0.5];
+const SECTION_ENERGY = [0.88, 0.95, 1, 0.94, 0.9];
 const MIN_SECTION_BARS = 4;
+const PHRASE_BARS = 8;
 
 export interface ArrangedSection {
   label: string;
@@ -57,7 +58,9 @@ function stripLeadingSetCps(code: string): string {
 }
 
 function allocateBars(totalBars: number, weights: number[]): number[] {
-  const raw = weights.map((weight) => Math.max(MIN_SECTION_BARS, Math.round(totalBars * weight)));
+  const raw = weights.map((weight) =>
+    Math.max(MIN_SECTION_BARS, Math.round((totalBars * weight) / PHRASE_BARS) * PHRASE_BARS)
+  );
   let sum = raw.reduce((acc, value) => acc + value, 0);
 
   while (sum > totalBars) {
@@ -65,13 +68,17 @@ function allocateBars(totalBars: number, weights: number[]): number[] {
     if (index === -1) {
       break;
     }
-    raw[index] -= 1;
-    sum -= 1;
+    raw[index] -= PHRASE_BARS;
+    sum -= PHRASE_BARS;
   }
 
   while (sum < totalBars) {
-    raw[raw.length - 1] += 1;
-    sum += 1;
+    raw[raw.length - 1] += PHRASE_BARS;
+    sum += PHRASE_BARS;
+  }
+
+  if (sum !== totalBars) {
+    raw[raw.length - 1] += totalBars - sum;
   }
 
   return raw;
@@ -80,6 +87,36 @@ function allocateBars(totalBars: number, weights: number[]): number[] {
 function chooseTemplateForSection(baseTemplate: TemplateDefinition): TemplateDefinition {
   // Keep tonal/style identity stable within one long-form piece.
   return baseTemplate;
+}
+
+function phaseIndexForSection(sectionIndex: number, phaseCount: number): number {
+  if (phaseCount <= 1) {
+    return 0;
+  }
+  if (phaseCount === 2) {
+    const map = [0, 1, 1, 1, 1];
+    return map[sectionIndex] ?? 1;
+  }
+  const last = phaseCount - 1;
+  const preLast = Math.max(1, last - 1);
+  const map = [0, 1, last, preLast, last];
+  return map[sectionIndex] ?? last;
+}
+
+function phaseFocusedTemplate(template: TemplateDefinition, sectionIndex: number): TemplateDefinition {
+  const phases = template.rules.phases;
+  if (phases.length <= 1) {
+    return template;
+  }
+  const selectedIndex = phaseIndexForSection(sectionIndex, phases.length);
+  const selectedPhase = phases[selectedIndex];
+  return {
+    ...template,
+    rules: {
+      ...template.rules,
+      phases: [selectedPhase]
+    }
+  };
 }
 
 function modulateParams(
@@ -93,12 +130,15 @@ function modulateParams(
   for (const schema of template.paramSchema) {
     const current = output[schema.key];
     if (schema.type === "number" && typeof current === "number") {
-      const scaled = schema.min + (current - schema.min) * energy;
-      output[schema.key] = Math.min(schema.max, Math.max(schema.min, Number(scaled.toFixed(4))));
+      const scaled = current * energy;
+      const clamped = Math.min(schema.max, Math.max(schema.min, Number(scaled.toFixed(4))));
+      const steps = Math.round((clamped - schema.min) / schema.step);
+      const snapped = schema.min + steps * schema.step;
+      output[schema.key] = Number(Math.min(schema.max, Math.max(schema.min, snapped)).toFixed(4));
       continue;
     }
     if (schema.type === "boolean") {
-      output[schema.key] = energy > 0.85 ? true : Boolean(current);
+      output[schema.key] = Boolean(current);
     }
   }
 
@@ -131,8 +171,9 @@ export function generateLongFormPiece(options: GenerateLongFormOptions): LongFor
   const sections: ArrangedSection[] = barPlan.map((bars, sectionIndex) => {
     const sectionSeed = `${options.seed}-${sectionIndex}`;
     const template = chooseTemplateForSection(options.baseTemplate);
+    const sectionTemplate = phaseFocusedTemplate(template, sectionIndex);
     const sectionParams = modulateParams(template, options.baseParams, sectionIndex);
-    const sectionCode = buildCode(template, {
+    const sectionCode = buildCode(sectionTemplate, {
       bpm: options.bpm,
       bars,
       params: sectionParams,
@@ -141,7 +182,7 @@ export function generateLongFormPiece(options: GenerateLongFormOptions): LongFor
 
     return {
       label: blueprint.labels[sectionIndex] ?? `Part ${sectionIndex + 1}`,
-      templateId: template.id,
+      templateId: sectionTemplate.id,
       bars,
       code: stripLeadingSetCps(sectionCode)
     };
@@ -155,7 +196,12 @@ export function generateLongFormPiece(options: GenerateLongFormOptions): LongFor
     return `(${expr})`;
   });
 
-  const code = `setcps(${(options.bpm / 120).toFixed(3)});\ncat(\n${indentLines(suiteExprs.join(",\n"), 2)}\n)`;
+  const sectionBlocks = suiteExprs.map((expr, index) => {
+    const section = sections[index];
+    return `// SECTION ${index + 1}: ${section.label} (${section.bars} bars)\n${expr}`;
+  });
+
+  const code = `setcps(${(options.bpm / 120).toFixed(3)});\ncat(\n${indentLines(sectionBlocks.join(",\n\n"), 2)}\n)`;
 
   return {
     code,
