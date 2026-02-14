@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -40,7 +40,7 @@ describe("App shell", () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: "strudelest" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Generator" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Transport" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Arrangement Map" })).toBeInTheDocument();
   });
 
   it("does not render a Visualizations tab", () => {
@@ -55,13 +55,23 @@ describe("App shell", () => {
     expect(screen.getByRole("heading", { name: "Reference Songs" })).toBeInTheDocument();
   });
 
+  it("renders a Saved Pieces tab left of Strudel Dock", () => {
+    render(<App />);
+    const tabs = screen.getAllByRole("tab");
+    const savedIndex = tabs.findIndex((tab) => tab.textContent === "Saved Pieces");
+    const dockIndex = tabs.findIndex((tab) => tab.textContent === "Strudel Dock");
+    expect(savedIndex).toBeGreaterThan(-1);
+    expect(dockIndex).toBeGreaterThan(-1);
+    expect(savedIndex).toBeLessThan(dockIndex);
+  });
+
   it("shows editable strudel input in generator tab", () => {
     render(<App />);
     expect(screen.getByPlaceholderText("Edit or paste Strudel code here...")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Strudel Input" })).toBeInTheDocument();
   });
 
-  it("shows Strudel Input in Generator, MIDI Import, and Reference Songs tabs", async () => {
+  it("shows Strudel Input in Generator, MIDI Import, Reference Songs, and Saved Pieces tabs", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -70,6 +80,40 @@ describe("App shell", () => {
     expect(screen.getByRole("heading", { name: "Strudel Input" })).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "Reference Songs" }));
     expect(screen.getByRole("heading", { name: "Strudel Input" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Saved Pieces" }));
+    expect(screen.getByRole("heading", { name: "Strudel Input" })).toBeInTheDocument();
+  });
+
+  it("shows transport controls only in Strudel Dock", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(screen.queryByRole("heading", { name: "Transport" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "MIDI Import" }));
+    expect(screen.queryByRole("heading", { name: "Transport" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Reference Songs" }));
+    expect(screen.queryByRole("heading", { name: "Transport" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Strudel Dock" }));
+    expect(screen.getByRole("heading", { name: "Transport" })).toBeInTheDocument();
+  });
+
+  it("shows status and tips in MIDI Import and Reference Songs sidebars", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("tab", { name: "MIDI Import" }));
+    const midiPanel = screen.getByRole("tabpanel", { name: "MIDI Import" });
+    expect(within(midiPanel).getByText("Status: Ready")).toBeInTheDocument();
+    expect(within(midiPanel).getByRole("heading", { name: "Tips" })).toBeInTheDocument();
+    expect(within(midiPanel).getByText("Re-import after changing quantize settings.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "Reference Songs" }));
+    const referencePanel = screen.getByRole("tabpanel", { name: "Reference Songs" });
+    expect(within(referencePanel).getByText("Status: Ready")).toBeInTheDocument();
+    expect(within(referencePanel).getByRole("heading", { name: "Tips" })).toBeInTheDocument();
+    expect(
+      within(referencePanel).getByText("Use Strudel Dock for Play, Stop, Save, and Share.")
+    ).toBeInTheDocument();
   });
 
   it("generates and saves a piece to the library", async () => {
@@ -77,7 +121,9 @@ describe("App shell", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Generate" }));
-    await user.click(screen.getAllByRole("button", { name: "Save" })[0]);
+    await user.click(screen.getByRole("tab", { name: "Strudel Dock" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("tab", { name: "Saved Pieces" }));
 
     expect(screen.getByRole("heading", { name: "Saved Pieces (1)" })).toBeInTheDocument();
   });
@@ -87,7 +133,9 @@ describe("App shell", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Generate" }));
-    await user.click(screen.getAllByRole("button", { name: "Save" })[0]);
+    await user.click(screen.getByRole("tab", { name: "Strudel Dock" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("tab", { name: "Saved Pieces" }));
     await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
 
     expect(screen.getByRole("heading", { name: "Saved Pieces (0)" })).toBeInTheDocument();
@@ -116,8 +164,9 @@ describe("App shell", () => {
     await user.upload(fileInput, file);
 
     await waitFor(() => {
+      const midiPanel = screen.getByRole("tabpanel", { name: "MIDI Import" });
       expect(
-        screen.getByText(
+        within(midiPanel).getByText(
           "Status: Imported MIDI (1/16): 2 tracks, 12 bars + inline visualization (scope)"
         )
       ).toBeInTheDocument();
@@ -148,7 +197,8 @@ describe("App shell", () => {
     await user.upload(fileInput, file);
 
     await waitFor(() => {
-      expect(screen.getByText("Status: MIDI import failed: bad midi")).toBeInTheDocument();
+      const midiPanel = screen.getByRole("tabpanel", { name: "MIDI Import" });
+      expect(within(midiPanel).getByText("Status: MIDI import failed: bad midi")).toBeInTheDocument();
     });
     await user.click(screen.getByRole("tab", { name: "Generator" }));
     expect(textarea).toHaveValue("existing code");
@@ -207,7 +257,9 @@ describe("App shell", () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Generate" }));
+    await user.click(screen.getByRole("tab", { name: "Strudel Dock" }));
     expect(screen.getByRole("button", { name: "Play" })).toBeDisabled();
+    await user.click(screen.getByRole("tab", { name: "Generator" }));
     await user.click(screen.getByRole("button", { name: "Push To Studel Dock" }));
     await user.click(screen.getByRole("button", { name: "Play" }));
     await user.click(screen.getByRole("button", { name: "Stop" }));

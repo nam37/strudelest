@@ -69,16 +69,6 @@ body {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
 }
 
-.control-grid {
-  display: grid;
-  grid-template-columns: 1.7fr 1fr;
-  gap: 1rem;
-}
-
-.control-column {
-  min-width: 0;
-}
-
 h2 {
   margin: 0 0 0.35rem;
   font-size: 0.98rem;
@@ -176,6 +166,24 @@ button:hover {
   display: block;
 }
 
+.tab-layout {
+  display: grid;
+  grid-template-columns: 1.75fr 1fr;
+  gap: 1rem;
+}
+
+.tab-main,
+.tab-sidebar {
+  min-width: 0;
+}
+
+.tab-sidebar {
+  border: 1px solid rgba(177, 209, 255, 0.18);
+  border-radius: 12px;
+  padding: 0.7rem;
+  background: rgba(8, 11, 18, 0.45);
+}
+
 .tab {
   background: rgba(9, 12, 22, 0.66);
   border: 1px solid rgba(177, 209, 255, 0.24);
@@ -262,7 +270,7 @@ button.danger {
 }
 
 @media (max-width: 920px) {
-  .control-grid {
+  .tab-layout {
     grid-template-columns: 1fr;
   }
 

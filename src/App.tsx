@@ -27,7 +27,7 @@ interface ReferenceSong {
 }
 
 type ComposeMode = "loop" | "suite";
-type ControlTab = "generator" | "dock" | "midi-import" | "reference-songs";
+type ControlTab = "generator" | "dock" | "midi-import" | "reference-songs" | "saved-pieces";
 
 type AutoVisualizationKind = "scope" | "pianoroll";
 type MidiUiOptions = Pick<MidiImportOptions, "quantizeDivision" | "preferSharps" | "includeVelocityAsGain">;
@@ -507,7 +507,9 @@ function App(): JSX.Element {
     }
   };
 
-  const renderStrudelInput = (idSuffix: "generator" | "midi" | "reference"): JSX.Element => (
+  const renderStrudelInput = (
+    idSuffix: "generator" | "midi" | "reference" | "saved"
+  ): JSX.Element => (
     <>
       <h2>Strudel Input</h2>
       <textarea
@@ -540,8 +542,7 @@ function App(): JSX.Element {
         <p>Generate long-form stylized pieces with Strudel and shape full arrangements.</p>
       </header>
 
-        <section className="panel control-grid">
-        <div className="control-column">
+        <section className="panel">
           <div className="tab-row" role="tablist" aria-label="Control tabs">
             <button
               className={controlTab === "generator" ? "tab active" : "tab"}
@@ -574,6 +575,16 @@ function App(): JSX.Element {
               Reference Songs
             </button>
             <button
+              className={controlTab === "saved-pieces" ? "tab active" : "tab"}
+              onClick={() => setControlTab("saved-pieces")}
+              role="tab"
+              aria-selected={controlTab === "saved-pieces"}
+              aria-controls="panel-saved-pieces"
+              id="tab-saved-pieces"
+            >
+              Saved Pieces
+            </button>
+            <button
               className={controlTab === "dock" ? "tab active" : "tab"}
               onClick={() => setControlTab("dock")}
               role="tab"
@@ -592,170 +603,187 @@ function App(): JSX.Element {
             className={controlTab === "generator" ? "tab-panel active" : "tab-panel"}
             aria-hidden={controlTab !== "generator"}
           >
-          <h2>Generator</h2>
-          <label htmlFor="composeMode">Compose Mode</label>
-          <select
-            id="composeMode"
-            value={composeMode}
-            onChange={(event) => setComposeMode(event.target.value as ComposeMode)}
-          >
-            <option value="suite">Long-form Suite</option>
-            <option value="loop">Single Loop</option>
-          </select>
-
-          <label htmlFor="template">Template</label>
-          <select
-            id="template"
-            value={activeTemplateId}
-            onChange={(event) => onTemplateChange(event.target.value)}
-          >
-            {templates.map((template) => (
-              <option key={template.id} value={template.id}>
-                {template.label}
-              </option>
-            ))}
-          </select>
-
-          <label htmlFor="bpm">BPM</label>
-          <input
-            id="bpm"
-            type="number"
-            min={60}
-            max={200}
-            value={generatorState.bpm}
-            onChange={(event) =>
-              setGeneratorState((prev) => ({ ...prev, bpm: Number(event.target.value) }))
-            }
-          />
-
-          <label htmlFor="bars">Bars</label>
-          <input
-            id="bars"
-            type="number"
-            min={1}
-            max={64}
-            value={generatorState.bars}
-            onChange={(event) =>
-              setGeneratorState((prev) => ({ ...prev, bars: Number(event.target.value) }))
-            }
-          />
-
-          <label htmlFor="seed">Seed</label>
-          <input
-            id="seed"
-            type="text"
-            value={generatorState.seed}
-            onChange={(event) => setGeneratorState((prev) => ({ ...prev, seed: event.target.value }))}
-          />
-
-          <label htmlFor="pieceName">Piece Name</label>
-          <input
-            id="pieceName"
-            type="text"
-            value={draftName}
-            onChange={(event) => setDraftName(event.target.value)}
-          />
-
-          {composeMode === "suite" ? (
-            <>
-              <label htmlFor="lengthPreset">Length</label>
-              <select
-                id="lengthPreset"
-                value={lengthPreset}
-                onChange={(event) => setLengthPreset(event.target.value as LengthPreset)}
-              >
-                <option value="short">Short (32 bars)</option>
-                <option value="medium">Medium (64 bars)</option>
-                <option value="long">Long (96 bars)</option>
-                <option value="xl">XL (128 bars)</option>
-              </select>
-
-              <label htmlFor="arrangementStyle">Arrangement</label>
-              <select
-                id="arrangementStyle"
-                value={arrangementStyle}
-                onChange={(event) => setArrangementStyle(event.target.value as ArrangementStyle)}
-              >
-                <option value="arc">Arc</option>
-                <option value="club">Club</option>
-                <option value="cinematic">Cinematic</option>
-              </select>
-            </>
-          ) : null}
-
-          {activeTemplate.paramSchema.map((param) => (
-            <div key={param.key}>
-              <label htmlFor={param.key}>{param.key}</label>
-              {param.type === "number" ? (
-                <input
-                  id={param.key}
-                  type="number"
-                  min={param.min}
-                  max={param.max}
-                  step={param.step}
-                  value={Number(generatorState.params[param.key] ?? 0)}
-                  onChange={(event) =>
-                    setGeneratorState((prev) => ({
-                      ...prev,
-                      params: {
-                        ...prev.params,
-                        [param.key]: Number(event.target.value)
-                      }
-                    }))
-                  }
-                />
-              ) : null}
-              {param.type === "select" ? (
+            <div className="tab-layout">
+              <div className="tab-main">
+                <h2>Generator</h2>
+                <label htmlFor="composeMode">Compose Mode</label>
                 <select
-                  id={param.key}
-                  value={String(generatorState.params[param.key] ?? "")}
-                  onChange={(event) =>
-                    setGeneratorState((prev) => ({
-                      ...prev,
-                      params: {
-                        ...prev.params,
-                        [param.key]: event.target.value
-                      }
-                    }))
-                  }
+                  id="composeMode"
+                  value={composeMode}
+                  onChange={(event) => setComposeMode(event.target.value as ComposeMode)}
                 >
-                  {(param.options ?? []).map((option) => (
-                    <option key={option} value={option}>
-                      {option}
+                  <option value="suite">Long-form Suite</option>
+                  <option value="loop">Single Loop</option>
+                </select>
+
+                <label htmlFor="template">Template</label>
+                <select
+                  id="template"
+                  value={activeTemplateId}
+                  onChange={(event) => onTemplateChange(event.target.value)}
+                >
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.label}
                     </option>
                   ))}
                 </select>
-              ) : null}
-              {param.type === "boolean" ? (
+
+                <label htmlFor="bpm">BPM</label>
                 <input
-                  id={param.key}
-                  type="checkbox"
-                  checked={Boolean(generatorState.params[param.key])}
+                  id="bpm"
+                  type="number"
+                  min={60}
+                  max={200}
+                  value={generatorState.bpm}
                   onChange={(event) =>
-                    setGeneratorState((prev) => ({
-                      ...prev,
-                      params: {
-                        ...prev.params,
-                        [param.key]: event.target.checked
-                      }
-                    }))
+                    setGeneratorState((prev) => ({ ...prev, bpm: Number(event.target.value) }))
                   }
                 />
-              ) : null}
-            </div>
-          ))}
 
-          <div className="row">
-            <button onClick={onGenerate}>Generate</button>
-            <button
-              onClick={() => setGeneratorState((prev) => ({ ...prev, seed: createSeed() }))}
-            >
-              New Seed
-            </button>
-            <button onClick={onSave}>Save</button>
-            <button onClick={onCopyShare}>Share</button>
-          </div>
-          {controlTab === "generator" ? renderStrudelInput("generator") : null}
+                <label htmlFor="bars">Bars</label>
+                <input
+                  id="bars"
+                  type="number"
+                  min={1}
+                  max={64}
+                  value={generatorState.bars}
+                  onChange={(event) =>
+                    setGeneratorState((prev) => ({ ...prev, bars: Number(event.target.value) }))
+                  }
+                />
+
+                <label htmlFor="seed">Seed</label>
+                <input
+                  id="seed"
+                  type="text"
+                  value={generatorState.seed}
+                  onChange={(event) =>
+                    setGeneratorState((prev) => ({ ...prev, seed: event.target.value }))
+                  }
+                />
+
+                <label htmlFor="pieceName">Piece Name</label>
+                <input
+                  id="pieceName"
+                  type="text"
+                  value={draftName}
+                  onChange={(event) => setDraftName(event.target.value)}
+                />
+
+                {composeMode === "suite" ? (
+                  <>
+                    <label htmlFor="lengthPreset">Length</label>
+                    <select
+                      id="lengthPreset"
+                      value={lengthPreset}
+                      onChange={(event) => setLengthPreset(event.target.value as LengthPreset)}
+                    >
+                      <option value="short">Short (32 bars)</option>
+                      <option value="medium">Medium (64 bars)</option>
+                      <option value="long">Long (96 bars)</option>
+                      <option value="xl">XL (128 bars)</option>
+                    </select>
+
+                    <label htmlFor="arrangementStyle">Arrangement</label>
+                    <select
+                      id="arrangementStyle"
+                      value={arrangementStyle}
+                      onChange={(event) => setArrangementStyle(event.target.value as ArrangementStyle)}
+                    >
+                      <option value="arc">Arc</option>
+                      <option value="club">Club</option>
+                      <option value="cinematic">Cinematic</option>
+                    </select>
+                  </>
+                ) : null}
+
+                {activeTemplate.paramSchema.map((param) => (
+                  <div key={param.key}>
+                    <label htmlFor={param.key}>{param.key}</label>
+                    {param.type === "number" ? (
+                      <input
+                        id={param.key}
+                        type="number"
+                        min={param.min}
+                        max={param.max}
+                        step={param.step}
+                        value={Number(generatorState.params[param.key] ?? 0)}
+                        onChange={(event) =>
+                          setGeneratorState((prev) => ({
+                            ...prev,
+                            params: {
+                              ...prev.params,
+                              [param.key]: Number(event.target.value)
+                            }
+                          }))
+                        }
+                      />
+                    ) : null}
+                    {param.type === "select" ? (
+                      <select
+                        id={param.key}
+                        value={String(generatorState.params[param.key] ?? "")}
+                        onChange={(event) =>
+                          setGeneratorState((prev) => ({
+                            ...prev,
+                            params: {
+                              ...prev.params,
+                              [param.key]: event.target.value
+                            }
+                          }))
+                        }
+                      >
+                        {(param.options ?? []).map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    ) : null}
+                    {param.type === "boolean" ? (
+                      <input
+                        id={param.key}
+                        type="checkbox"
+                        checked={Boolean(generatorState.params[param.key])}
+                        onChange={(event) =>
+                          setGeneratorState((prev) => ({
+                            ...prev,
+                            params: {
+                              ...prev.params,
+                              [param.key]: event.target.checked
+                            }
+                          }))
+                        }
+                      />
+                    ) : null}
+                  </div>
+                ))}
+
+                <div className="row">
+                  <button onClick={onGenerate}>Generate</button>
+                  <button
+                    onClick={() => setGeneratorState((prev) => ({ ...prev, seed: createSeed() }))}
+                  >
+                    New Seed
+                  </button>
+                </div>
+                {controlTab === "generator" ? renderStrudelInput("generator") : null}
+              </div>
+              <aside className="tab-sidebar">
+                <p className="status">Status: {status}</p>
+                <h2>Arrangement Map</h2>
+                {sectionSummary.length > 0 ? (
+                  <ul className="section-list">
+                    {sectionSummary.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="dock-note">No arrangement summary yet. Generate a piece to populate this map.</p>
+                )}
+              </aside>
+            </div>
           </div>
 
           <div
@@ -765,11 +793,29 @@ function App(): JSX.Element {
             className={controlTab === "dock" ? "tab-panel active" : "tab-panel"}
             aria-hidden={controlTab !== "dock"}
           >
-              <h2>Strudel Dock</h2>
-              <p className="dock-note">
-                Embedded Strudel player/editor. Use Play/Stop on the right with current output code.
-              </p>
-              <div ref={setDockContainerEl} className="strudel-dock" />
+            <div className="tab-layout">
+              <div className="tab-main">
+                <h2>Strudel Dock</h2>
+                <p className="dock-note">
+                  Embedded Strudel player/editor. Push code from Generator, MIDI Import, or Reference Songs before playback.
+                </p>
+                <div ref={setDockContainerEl} className="strudel-dock" />
+              </div>
+              <aside className="tab-sidebar">
+                <h2>Transport</h2>
+                <div className="row">
+                  <button onClick={() => void onPlay()} disabled={!isDockSynced || isPlayingUi}>
+                    Play
+                  </button>
+                  <button onClick={() => void onStop()} disabled={!isPlayingUi}>
+                    Stop
+                  </button>
+                  <button onClick={onSave}>Save</button>
+                  <button onClick={() => void onCopyShare()}>Share</button>
+                </div>
+                <p className="status">Status: {status}</p>
+              </aside>
+            </div>
           </div>
 
           <div
@@ -779,62 +825,74 @@ function App(): JSX.Element {
             className={controlTab === "midi-import" ? "tab-panel active" : "tab-panel"}
             aria-hidden={controlTab !== "midi-import"}
           >
-              <h2>MIDI Import</h2>
-              <p className="dock-note">
-                Import a `.mid` file and convert it into layered Strudel code.
-              </p>
-              <label htmlFor="midiQuantize">Import Quantize Division (re-import to apply)</label>
-              <select
-                id="midiQuantize"
-                value={String(midiImportOptions.quantizeDivision)}
-                onChange={(event) =>
-                  setMidiImportOptions((prev) => ({
-                    ...prev,
-                    quantizeDivision: Number(event.target.value)
-                  }))
-                }
-              >
-                <option value="4">1/4</option>
-                <option value="8">1/8</option>
-                <option value="16">1/16</option>
-                <option value="24">1/24</option>
-                <option value="32">1/32</option>
-              </select>
-              <label htmlFor="midiPreferSharps">Prefer Sharps</label>
-              <input
-                id="midiPreferSharps"
-                type="checkbox"
-                checked={midiImportOptions.preferSharps}
-                onChange={(event) =>
-                  setMidiImportOptions((prev) => ({
-                    ...prev,
-                    preferSharps: event.target.checked
-                  }))
-                }
-              />
-              <label htmlFor="midiVelocityGain">Use Velocity as Gain</label>
-              <input
-                id="midiVelocityGain"
-                type="checkbox"
-                checked={midiImportOptions.includeVelocityAsGain}
-                onChange={(event) =>
-                  setMidiImportOptions((prev) => ({
-                    ...prev,
-                    includeVelocityAsGain: event.target.checked
-                  }))
-                }
-              />
-              <div className="row">
-                <button onClick={onOpenMidiPicker}>Import MIDI</button>
+            <div className="tab-layout">
+              <div className="tab-main">
+                <h2>MIDI Import</h2>
+                <p className="dock-note">
+                  Import a `.mid` file and convert it into layered Strudel code.
+                </p>
+                <label htmlFor="midiQuantize">Import Quantize Division (re-import to apply)</label>
+                <select
+                  id="midiQuantize"
+                  value={String(midiImportOptions.quantizeDivision)}
+                  onChange={(event) =>
+                    setMidiImportOptions((prev) => ({
+                      ...prev,
+                      quantizeDivision: Number(event.target.value)
+                    }))
+                  }
+                >
+                  <option value="4">1/4</option>
+                  <option value="8">1/8</option>
+                  <option value="16">1/16</option>
+                  <option value="24">1/24</option>
+                  <option value="32">1/32</option>
+                </select>
+                <label htmlFor="midiPreferSharps">Prefer Sharps</label>
+                <input
+                  id="midiPreferSharps"
+                  type="checkbox"
+                  checked={midiImportOptions.preferSharps}
+                  onChange={(event) =>
+                    setMidiImportOptions((prev) => ({
+                      ...prev,
+                      preferSharps: event.target.checked
+                    }))
+                  }
+                />
+                <label htmlFor="midiVelocityGain">Use Velocity as Gain</label>
+                <input
+                  id="midiVelocityGain"
+                  type="checkbox"
+                  checked={midiImportOptions.includeVelocityAsGain}
+                  onChange={(event) =>
+                    setMidiImportOptions((prev) => ({
+                      ...prev,
+                      includeVelocityAsGain: event.target.checked
+                    }))
+                  }
+                />
+                <div className="row">
+                  <button onClick={onOpenMidiPicker}>Import MIDI</button>
+                </div>
+                <input
+                  ref={midiFileInputRef}
+                  type="file"
+                  accept=".mid,.midi,audio/midi"
+                  onChange={(event) => void onMidiFileSelected(event)}
+                  style={{ display: "none" }}
+                />
+                {controlTab === "midi-import" ? renderStrudelInput("midi") : null}
               </div>
-              <input
-                ref={midiFileInputRef}
-                type="file"
-                accept=".mid,.midi,audio/midi"
-                onChange={(event) => void onMidiFileSelected(event)}
-                style={{ display: "none" }}
-              />
-              {controlTab === "midi-import" ? renderStrudelInput("midi") : null}
+              <aside className="tab-sidebar">
+                <p className="status">Status: {status}</p>
+                <h2>Tips</h2>
+                <ul className="section-list">
+                  <li>Re-import after changing quantize settings.</li>
+                  <li>Use Push To Studel Dock before playing in Strudel Dock.</li>
+                </ul>
+              </aside>
+            </div>
           </div>
 
           <div
@@ -844,71 +902,80 @@ function App(): JSX.Element {
             className={controlTab === "reference-songs" ? "tab-panel active" : "tab-panel"}
             aria-hidden={controlTab !== "reference-songs"}
           >
-              <h2>Reference Songs</h2>
-              <label htmlFor="referenceSong">Songbook</label>
-              <select
-                id="referenceSong"
-                value={selectedReferenceId}
-                onChange={(event) => setSelectedReferenceId(event.target.value)}
-                disabled={referenceSongs.length === 0}
-              >
-                {referenceSongs.length === 0 ? (
-                  <option value="">No songs found (run songbook sync)</option>
-                ) : null}
-                {referenceSongs.map((song) => (
-                  <option key={song.id} value={song.id}>
-                    {song.title}
-                  </option>
-                ))}
-              </select>
-              <div className="row">
-                <button onClick={() => void onLoadReferenceSong()} disabled={referenceSongs.length === 0}>
-                  Load Reference
-                </button>
+            <div className="tab-layout">
+              <div className="tab-main">
+                <h2>Reference Songs</h2>
+                <label htmlFor="referenceSong">Songbook</label>
+                <select
+                  id="referenceSong"
+                  value={selectedReferenceId}
+                  onChange={(event) => setSelectedReferenceId(event.target.value)}
+                  disabled={referenceSongs.length === 0}
+                >
+                  {referenceSongs.length === 0 ? (
+                    <option value="">No songs found (run songbook sync)</option>
+                  ) : null}
+                  {referenceSongs.map((song) => (
+                    <option key={song.id} value={song.id}>
+                      {song.title}
+                    </option>
+                  ))}
+                </select>
+                <div className="row">
+                  <button onClick={() => void onLoadReferenceSong()} disabled={referenceSongs.length === 0}>
+                    Load Reference
+                  </button>
+                </div>
+                {controlTab === "reference-songs" ? renderStrudelInput("reference") : null}
               </div>
-              {controlTab === "reference-songs" ? renderStrudelInput("reference") : null}
+              <aside className="tab-sidebar">
+                <p className="status">Status: {status}</p>
+                <h2>Tips</h2>
+                <ul className="section-list">
+                  <li>Load a song, tweak code in Strudel Input, then push to dock.</li>
+                  <li>Use Strudel Dock for Play, Stop, Save, and Share.</li>
+                </ul>
+              </aside>
+            </div>
           </div>
-        </div>
 
-        <div className="control-column">
-          <h2>Transport</h2>
-          <div className="row">
-            <button onClick={() => void onPlay()} disabled={!isDockSynced || isPlayingUi}>
-              Play
-            </button>
-            <button onClick={() => void onStop()} disabled={!isPlayingUi}>
-              Stop
-            </button>
-            <button onClick={onSave}>Save</button>
-            <button onClick={() => void onCopyShare()}>Share</button>
+          <div
+            id="panel-saved-pieces"
+            role="tabpanel"
+            aria-labelledby="tab-saved-pieces"
+            className={controlTab === "saved-pieces" ? "tab-panel active" : "tab-panel"}
+            aria-hidden={controlTab !== "saved-pieces"}
+          >
+            <div className="tab-layout">
+              <div className="tab-main">
+                <h2>Saved Pieces ({library.length})</h2>
+                <ul>
+                  {library.map((piece) => (
+                    <li key={piece.id}>
+                      <div className="saved-row">
+                        <button className="link" onClick={() => loadPieceIntoEditor(piece)}>
+                          {piece.name}
+                        </button>
+                        <button className="danger" onClick={() => onDeletePiece(piece.id)}>
+                          Delete
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {controlTab === "saved-pieces" ? renderStrudelInput("saved") : null}
+              </div>
+              <aside className="tab-sidebar">
+                <p className="status">Status: {status}</p>
+                <h2>Tips</h2>
+                <ul className="section-list">
+                  <li>Load a saved piece to bring it back into Generator.</li>
+                  <li>Delete removes the piece from local storage.</li>
+                </ul>
+              </aside>
+            </div>
           </div>
-          <p className="status">Status: {status}</p>
-          <h2>Arrangement Map</h2>
-          <ul className="section-list">
-            {sectionSummary.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </div>
         </section>
-
-        <section className="panel">
-        <h2>Saved Pieces ({library.length})</h2>
-        <ul>
-          {library.map((piece) => (
-            <li key={piece.id}>
-              <div className="saved-row">
-                <button className="link" onClick={() => loadPieceIntoEditor(piece)}>
-                  {piece.name}
-                </button>
-                <button className="danger" onClick={() => onDeletePiece(piece.id)}>
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
       </main>
     </>
   );
