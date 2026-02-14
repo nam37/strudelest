@@ -1,6 +1,6 @@
 import type { PieceSpec } from "../../types/music";
 
-export const STORAGE_KEY = "strudelest:pieces:v1";
+export const STORAGE_KEY = "strudelest:pieces:v2";
 
 export function loadPieces(): PieceSpec[] {
   const raw = localStorage.getItem(STORAGE_KEY);

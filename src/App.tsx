@@ -40,8 +40,15 @@ const PATTERN_LINE_REGEX = /(^|[.(\s])s\s*\(|\bnote\s*\(|\bn\s*\(|\bchord\s*\(|\
 const INLINE_SCOPE_REGEX = /\._scope\s*\(/;
 const INLINE_PIANOROLL_REGEX = /\._pianoroll\s*\(/;
 
+function getTemplateById(templateId: string) {
+  return templates.find((template) => template.id === templateId);
+}
+
 function initialGeneratorState(templateId: string): GeneratorState {
-  const template = templates.find((item) => item.id === templateId) ?? templates[0];
+  const template = getTemplateById(templateId);
+  if (!template) {
+    throw new Error(`Unknown template: ${templateId}`);
+  }
   return {
     bpm: template.defaults.bpm,
     bars: template.defaults.bars,
@@ -95,9 +102,9 @@ function appendInlineVisualization(line: string, kind: AutoVisualizationKind): s
 }
 
 function App(): JSX.Element {
-  const [activeTemplateId, setActiveTemplateId] = useState<string>(templates[0].id);
+  const [activeTemplateId, setActiveTemplateId] = useState<string>(templates[0]?.id ?? "");
   const [generatorState, setGeneratorState] = useState<GeneratorState>(() =>
-    initialGeneratorState(templates[0].id)
+    initialGeneratorState(templates[0]?.id ?? "")
   );
   const [currentPiece, setCurrentPiece] = useState<PieceSpec | null>(null);
   const [codeDraft, setCodeDraft] = useState<string>("");
@@ -123,10 +130,7 @@ function App(): JSX.Element {
   const midiFileInputRef = useRef<HTMLInputElement | null>(null);
   const adapter = useMemo(() => createPlaybackAdapter(), []);
 
-  const activeTemplate = useMemo(
-    () => templates.find((template) => template.id === activeTemplateId) ?? templates[0],
-    [activeTemplateId]
-  );
+  const activeTemplate = useMemo(() => getTemplateById(activeTemplateId), [activeTemplateId]);
   const isDockSynced = pushedCode !== null && pushedCode === codeDraft;
 
   useEffect(() => {
@@ -141,8 +145,11 @@ function App(): JSX.Element {
       return;
     }
 
-    const template =
-      templates.find((templateItem) => templateItem.id === decoded.templateId) ?? templates[0];
+    const template = getTemplateById(decoded.templateId);
+    if (!template) {
+      setStatus(`Share template unavailable: ${decoded.templateId}`);
+      return;
+    }
     setActiveTemplateId(template.id);
     const nextState: GeneratorState = {
       bpm: decoded.bpm,
@@ -195,11 +202,25 @@ function App(): JSX.Element {
   }, []);
 
   const onTemplateChange = (templateId: string): void => {
+    const template = getTemplateById(templateId);
+    if (!template) {
+      setStatus(`Template unavailable: ${templateId}`);
+      return;
+    }
     setActiveTemplateId(templateId);
-    setGeneratorState(initialGeneratorState(templateId));
+    setGeneratorState({
+      bpm: template.defaults.bpm,
+      bars: template.defaults.bars,
+      seed: createSeed(),
+      params: { ...template.defaults.params }
+    });
   };
 
   const onGenerate = (): void => {
+    if (!activeTemplate) {
+      setStatus("No active template selected.");
+      return;
+    }
     let piece: PieceSpec;
     if (composeMode === "loop") {
       piece = generatePiece(activeTemplate, generatorState);
@@ -231,7 +252,7 @@ function App(): JSX.Element {
         code: arranged.code,
         createdAt: timestamp,
         updatedAt: timestamp,
-        version: 1
+        version: 2
       };
       setSectionSummary(
         arranged.sections.map(
@@ -452,8 +473,13 @@ function App(): JSX.Element {
   };
 
   const loadPieceIntoEditor = (piece: PieceSpec): void => {
+    const template = getTemplateById(piece.templateId);
+    if (!template) {
+      setStatus(`Saved piece template unavailable: ${piece.templateId}`);
+      return;
+    }
     setCurrentPiece(piece);
-    setActiveTemplateId(piece.templateId);
+    setActiveTemplateId(template.id);
     setGeneratorState({
       bpm: piece.bpm,
       bars: piece.bars,
@@ -646,7 +672,7 @@ function App(): JSX.Element {
                   id="bars"
                   type="number"
                   min={1}
-                  max={64}
+                  max={256}
                   value={generatorState.bars}
                   onChange={(event) =>
                     setGeneratorState((prev) => ({ ...prev, bars: Number(event.target.value) }))
@@ -698,7 +724,7 @@ function App(): JSX.Element {
                   </>
                 ) : null}
 
-                {activeTemplate.paramSchema.map((param) => (
+                {(activeTemplate?.paramSchema ?? []).map((param) => (
                   <div key={param.key}>
                     <label htmlFor={param.key}>{param.key}</label>
                     {param.type === "number" ? (
@@ -734,7 +760,7 @@ function App(): JSX.Element {
                           }))
                         }
                       >
-                        {(param.options ?? []).map((option) => (
+                        {param.options.map((option) => (
                           <option key={option} value={option}>
                             {option}
                           </option>

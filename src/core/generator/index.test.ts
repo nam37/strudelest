@@ -17,4 +17,13 @@ describe("generator", () => {
     expect(first.params).toEqual(second.params);
     expect(first.code).toEqual(second.code);
   });
+
+  it("clamps numeric overrides to schema limits", () => {
+    const template = templates.find((item) => item.id === "techno-drive");
+    expect(template).toBeDefined();
+    const resolved = resolveTemplateParams(template!, "seed-123", {
+      intensity: 99
+    });
+    expect(resolved.intensity).toBe(1);
+  });
 });

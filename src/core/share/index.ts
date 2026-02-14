@@ -17,7 +17,7 @@ function fromBase64(value: string): string {
 
 export function encodeSharePayload(piece: PieceSpec): string {
   const payload: SharePayload = {
-    version: 1 as const,
+    version: 2 as const,
     templateId: piece.templateId,
     bpm: piece.bpm,
     bars: piece.bars,
@@ -32,7 +32,7 @@ export function decodeSharePayload(payload: string): SharePayload | null {
   try {
     const decoded = JSON.parse(fromBase64(payload)) as Partial<SharePayload>;
     if (
-      decoded.version !== 1 ||
+      decoded.version !== 2 ||
       typeof decoded.templateId !== "string" ||
       typeof decoded.seed !== "string" ||
       typeof decoded.bpm !== "number" ||

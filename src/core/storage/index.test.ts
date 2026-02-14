@@ -13,7 +13,7 @@ const piece = (id: string): PieceSpec => ({
   code: 's("bd ~ sd ~")',
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
-  version: 1
+  version: 2
 });
 
 describe("storage", () => {

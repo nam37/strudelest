@@ -43,6 +43,25 @@ describe("App shell", () => {
     expect(screen.getByRole("heading", { name: "Arrangement Map" })).toBeInTheDocument();
   });
 
+  it("shows explicit status when shared template id is unknown", () => {
+    const payload = btoa(
+      JSON.stringify({
+        version: 2,
+        templateId: "missing-template",
+        bpm: 120,
+        bars: 8,
+        seed: "seed-x",
+        params: {}
+      })
+    );
+    window.history.replaceState({}, "", `/?p=${encodeURIComponent(payload)}`);
+
+    render(<App />);
+    expect(screen.getAllByText("Status: Share template unavailable: missing-template").length).toBeGreaterThan(
+      0
+    );
+  });
+
   it("does not render a Visualizations tab", () => {
     render(<App />);
     expect(screen.queryByRole("tab", { name: "Visualizations" })).not.toBeInTheDocument();

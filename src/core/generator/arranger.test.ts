@@ -20,5 +20,8 @@ describe("arranger", () => {
     expect(first.code).toBe(second.code);
     expect(first.totalBars).toBe(96);
     expect(first.sections).toHaveLength(5);
+    expect(first.code.startsWith("setcps(")).toBe(true);
+    expect(first.code).toContain("\ncat(\n");
+    expect((first.code.match(/setcps\(/g) ?? []).length).toBe(1);
   });
 });
