@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { createSeed, generatePiece } from "./core/generator";
-import {
-  generateLongFormPiece,
-  type ArrangementStyle,
-  type LengthPreset
-} from "./core/generator/arranger";
 import { importMidiFile } from "./core/midi/importMidi";
 import { decodeSharePayload, encodeSharePayload } from "./core/share";
 import { deletePiece, loadPieces, upsertPiece } from "./core/storage";
@@ -26,7 +21,6 @@ interface ReferenceSong {
   path: string;
 }
 
-type ComposeMode = "loop" | "suite";
 type ControlTab = "generator" | "dock" | "midi-import" | "reference-songs" | "saved-pieces";
 
 type AutoVisualizationKind = "scope" | "pianoroll";
@@ -114,10 +108,6 @@ function App(): JSX.Element {
   const [library, setLibrary] = useState<PieceSpec[]>(() => loadPieces());
   const [status, setStatus] = useState<string>("Ready");
   const [shareUrl, setShareUrl] = useState<string>("");
-  const [composeMode, setComposeMode] = useState<ComposeMode>("suite");
-  const [lengthPreset, setLengthPreset] = useState<LengthPreset>("long");
-  const [arrangementStyle, setArrangementStyle] = useState<ArrangementStyle>("arc");
-  const [sectionSummary, setSectionSummary] = useState<string[]>([]);
   const [referenceSongs, setReferenceSongs] = useState<ReferenceSong[]>([]);
   const [selectedReferenceId, setSelectedReferenceId] = useState<string>("");
   const [controlTab, setControlTab] = useState<ControlTab>("generator");
@@ -166,7 +156,6 @@ function App(): JSX.Element {
     setCurrentPiece(hydrated);
     setCodeDraft(hydrated.code);
     setDraftName(hydrated.name);
-    setSectionSummary([`Loaded from URL (${hydrated.bars} bars)`]);
     setStatus("Loaded from share URL");
   }, []);
 
@@ -221,46 +210,7 @@ function App(): JSX.Element {
       setStatus("No active template selected.");
       return;
     }
-    let piece: PieceSpec;
-    if (composeMode === "loop") {
-      piece = generatePiece(activeTemplate, generatorState);
-      setSectionSummary([`Single loop (${piece.bars} bars)`]);
-    } else {
-      const arranged = generateLongFormPiece({
-        baseTemplate: activeTemplate,
-        templates,
-        seed: generatorState.seed,
-        bpm: generatorState.bpm,
-        style: arrangementStyle,
-        length: lengthPreset,
-        baseParams: generatorState.params
-      });
-      const timestamp = new Date().toISOString();
-      piece = {
-        id: crypto.randomUUID(),
-        name: `${activeTemplate.label} ${arranged.titleTag}`,
-        templateId: activeTemplate.id,
-        bpm: generatorState.bpm,
-        bars: arranged.totalBars,
-        seed: generatorState.seed,
-        params: {
-          ...generatorState.params,
-          mode: composeMode,
-          style: arrangementStyle,
-          length: lengthPreset
-        },
-        code: arranged.code,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        version: 2
-      };
-      setSectionSummary(
-        arranged.sections.map(
-          (section, index) =>
-            `${index + 1}. ${section.label} - ${section.templateId} - ${section.bars} bars`
-        )
-      );
-    }
+    const piece = generatePiece(activeTemplate, generatorState);
     const withVisualization = injectAutoVisualization(piece.code);
     const pieceWithVisualization: PieceSpec = {
       ...piece,
@@ -422,7 +372,6 @@ function App(): JSX.Element {
       setCodeDraft(code.trim());
       setDraftName(`Reference: ${selected.title}`);
       setShareUrl("");
-      setSectionSummary([`Reference song loaded: ${selected.title}`]);
       setStatus(`Loaded reference: ${selected.title}`);
       return true;
     } catch {
@@ -450,7 +399,6 @@ function App(): JSX.Element {
       setDraftName(`Imported: ${trimmedName}`);
       setCurrentPiece(null);
       setShareUrl("");
-      setSectionSummary(result.sectionSummary);
       setGeneratorState((prev) => ({
         ...prev,
         bpm: result.bpm,
@@ -486,23 +434,10 @@ function App(): JSX.Element {
       seed: piece.seed,
       params: piece.params
     });
-    const maybeMode = piece.params.mode;
-    if (maybeMode === "loop" || maybeMode === "suite") {
-      setComposeMode(maybeMode);
-    }
-    const maybeStyle = piece.params.style;
-    if (maybeStyle === "arc" || maybeStyle === "club" || maybeStyle === "cinematic") {
-      setArrangementStyle(maybeStyle);
-    }
-    const maybeLength = piece.params.length;
-    if (maybeLength === "short" || maybeLength === "medium" || maybeLength === "long" || maybeLength === "xl") {
-      setLengthPreset(maybeLength);
-    }
     setDraftName(piece.name);
     setCodeDraft(piece.code);
     setIsPlayingUi(false);
     setShareUrl("");
-    setSectionSummary([`Loaded saved piece (${piece.bars} bars)`]);
     setStatus(`Loaded ${piece.name}`);
   };
 
@@ -565,7 +500,7 @@ function App(): JSX.Element {
         <header className="hero panel">
         <div className="hero-kicker">Algorithmic Composition Studio</div>
         <h1>strudelest</h1>
-        <p>Generate long-form stylized pieces with Strudel and shape full arrangements.</p>
+        <p>Generate structured pieces with Strudel using phase-driven templates.</p>
       </header>
 
         <section className="panel">
@@ -632,16 +567,6 @@ function App(): JSX.Element {
             <div className="tab-layout">
               <div className="tab-main">
                 <h2>Generator</h2>
-                <label htmlFor="composeMode">Compose Mode</label>
-                <select
-                  id="composeMode"
-                  value={composeMode}
-                  onChange={(event) => setComposeMode(event.target.value as ComposeMode)}
-                >
-                  <option value="suite">Long-form Suite</option>
-                  <option value="loop">Single Loop</option>
-                </select>
-
                 <label htmlFor="template">Template</label>
                 <select
                   id="template"
@@ -696,33 +621,6 @@ function App(): JSX.Element {
                   value={draftName}
                   onChange={(event) => setDraftName(event.target.value)}
                 />
-
-                {composeMode === "suite" ? (
-                  <>
-                    <label htmlFor="lengthPreset">Length</label>
-                    <select
-                      id="lengthPreset"
-                      value={lengthPreset}
-                      onChange={(event) => setLengthPreset(event.target.value as LengthPreset)}
-                    >
-                      <option value="short">Short (32 bars)</option>
-                      <option value="medium">Medium (64 bars)</option>
-                      <option value="long">Long (96 bars)</option>
-                      <option value="xl">XL (128 bars)</option>
-                    </select>
-
-                    <label htmlFor="arrangementStyle">Arrangement</label>
-                    <select
-                      id="arrangementStyle"
-                      value={arrangementStyle}
-                      onChange={(event) => setArrangementStyle(event.target.value as ArrangementStyle)}
-                    >
-                      <option value="arc">Arc</option>
-                      <option value="club">Club</option>
-                      <option value="cinematic">Cinematic</option>
-                    </select>
-                  </>
-                ) : null}
 
                 {(activeTemplate?.paramSchema ?? []).map((param) => (
                   <div key={param.key}>
@@ -798,16 +696,12 @@ function App(): JSX.Element {
               </div>
               <aside className="tab-sidebar">
                 <p className="status">Status: {status}</p>
-                <h2>Arrangement Map</h2>
-                {sectionSummary.length > 0 ? (
-                  <ul className="section-list">
-                    {sectionSummary.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="dock-note">No arrangement summary yet. Generate a piece to populate this map.</p>
-                )}
+                <h2>Generator Notes</h2>
+                <ul className="section-list">
+                  <li>Generation uses the selected template directly.</li>
+                  <li>Compose Mode and Arrangement Map logic are disabled.</li>
+                  <li>Adjust bars, seed, and template params, then generate.</li>
+                </ul>
               </aside>
             </div>
           </div>

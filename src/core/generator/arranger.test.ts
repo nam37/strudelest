@@ -24,4 +24,23 @@ describe("arranger", () => {
     expect(first.code).toContain("\ncat(\n");
     expect((first.code.match(/setcps\(/g) ?? []).length).toBe(1);
   });
+
+  it("re-bases focused section phases to avoid leading silence gaps", () => {
+    const techno = templates.find((template) => template.id === "techno");
+    expect(techno).toBeDefined();
+
+    const result = generateLongFormPiece({
+      baseTemplate: techno!,
+      templates,
+      seed: "suite-seed",
+      bpm: 132,
+      style: "arc",
+      length: "short",
+      baseParams: {
+        ...techno!.defaults.params
+      }
+    });
+
+    expect(result.code).not.toContain("silence");
+  });
 });

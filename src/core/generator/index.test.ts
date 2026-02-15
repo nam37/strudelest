@@ -11,7 +11,7 @@ describe("generator", () => {
   });
 
   it("generates identical code for same seed and settings", () => {
-    const template = templates[1];
+    const template = templates[0];
     const first = generatePiece(template, { seed: "same-seed", bpm: 120, bars: 8 });
     const second = generatePiece(template, { seed: "same-seed", bpm: 120, bars: 8 });
     expect(first.params).toEqual(second.params);
@@ -19,11 +19,11 @@ describe("generator", () => {
   });
 
   it("clamps numeric overrides to schema limits", () => {
-    const template = templates.find((item) => item.id === "techno-drive");
+    const template = templates.find((item) => item.id === "ambient");
     expect(template).toBeDefined();
     const resolved = resolveTemplateParams(template!, "seed-123", {
-      intensity: 99
+      air: 99
     });
-    expect(resolved.intensity).toBe(1);
+    expect(resolved.air).toBe(1);
   });
 });

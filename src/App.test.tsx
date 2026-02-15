@@ -40,7 +40,7 @@ describe("App shell", () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: "strudelest" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Generator" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Arrangement Map" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Generator Notes" })).toBeInTheDocument();
   });
 
   it("shows explicit status when shared template id is unknown", () => {

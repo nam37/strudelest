@@ -54,7 +54,13 @@ export interface LongFormResult {
 }
 
 function stripLeadingSetCps(code: string): string {
-  return code.replace(/^\s*setcps\([^)]*\);?\s*/i, "").trim();
+  return code
+    .replace(/^\s*setcps\([^)]*\);?\s*/i, "")
+    .replace(
+      /^\s*const\s+rep\s*=\s*\(n,\s*p\)\s*=>\s*cat\(\.\.\.Array\.from\(\{\s*length:\s*n\s*\},\s*\(\)\s*=>\s*p\)\);\s*/i,
+      ""
+    )
+    .trim();
 }
 
 function allocateBars(totalBars: number, weights: number[]): number[] {
@@ -110,11 +116,26 @@ function phaseFocusedTemplate(template: TemplateDefinition, sectionIndex: number
   }
   const selectedIndex = phaseIndexForSection(sectionIndex, phases.length);
   const selectedPhase = phases[selectedIndex];
+  const normalizedPhase =
+    selectedPhase.bars !== undefined
+      ? {
+          ...selectedPhase,
+          bars: {
+            start: 1,
+            end: Math.max(1, selectedPhase.bars.end - selectedPhase.bars.start + 1)
+          },
+          pct: undefined
+        }
+      : {
+          ...selectedPhase,
+          pct: { start: 0, end: 1 },
+          bars: undefined
+        };
   return {
     ...template,
     rules: {
       ...template.rules,
-      phases: [selectedPhase]
+      phases: [normalizedPhase]
     }
   };
 }
@@ -167,6 +188,7 @@ export function generateLongFormPiece(options: GenerateLongFormOptions): LongFor
   const blueprint = BLUEPRINTS[options.style];
   const totalBars = LENGTH_TO_BARS[options.length];
   const barPlan = allocateBars(totalBars, blueprint.weights);
+  const motifSeed = `${options.seed}-motif`;
 
   const sections: ArrangedSection[] = barPlan.map((bars, sectionIndex) => {
     const sectionSeed = `${options.seed}-${sectionIndex}`;
@@ -177,7 +199,8 @@ export function generateLongFormPiece(options: GenerateLongFormOptions): LongFor
       bpm: options.bpm,
       bars,
       params: sectionParams,
-      seed: sectionSeed
+      seed: sectionSeed,
+      patternSeed: motifSeed
     });
 
     return {

@@ -47,19 +47,20 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function pickWeightedPattern(rng: () => number, items: PatternOption[]): string {
+function pickWeightedPatternIndex(rng: () => number, items: PatternOption[]): number {
   if (items.length === 0) {
-    return "~";
+    return 0;
   }
   const total = items.reduce((sum, item) => sum + (item.weight ?? 1), 0);
   let roll = rng() * total;
-  for (const item of items) {
+  for (let index = 0; index < items.length; index += 1) {
+    const item = items[index];
     roll -= item.weight ?? 1;
     if (roll <= 0) {
-      return item.value;
+      return index;
     }
   }
-  return items[items.length - 1].value;
+  return items.length - 1;
 }
 
 function quantize(value: number, step: number): number {
@@ -286,10 +287,18 @@ function toSafeBars(value: number): number {
   return Math.max(1, Math.round(value));
 }
 
+function repeatExpr(expr: string, bars: number): string {
+  const count = Math.max(1, Math.round(bars));
+  if (count === 1) {
+    return expr;
+  }
+  return `rep(${count}, ${expr})`;
+}
+
 export function buildCode(template: TemplateDefinition, input: BuildInput): string {
   const bars = toSafeBars(input.bars);
   const cps = (input.bpm / 120).toFixed(3);
-  const rng = mulberry32(hashSeedToUint32(input.seed));
+  const rng = mulberry32(hashSeedToUint32(input.patternSeed ?? input.seed));
   const runtime = template.deriveRuntime?.({ template, input }) ?? {};
   const phases = normalizePhases(template.rules, bars);
   const rotatePatterns =
@@ -297,15 +306,19 @@ export function buildCode(template: TemplateDefinition, input: BuildInput): stri
 
   const layerById = new Map(template.rules.layers.map((layer) => [layer.id, layer]));
   const basePatternByLayerId: Record<string, string> = {};
+  const basePatternIndexByLayerId: Record<string, number> = {};
 
   for (const layer of template.rules.layers) {
-    basePatternByLayerId[layer.id] = pickWeightedPattern(rng, layer.patterns);
+    const index = pickWeightedPatternIndex(rng, layer.patterns);
+    const safeIndex = Math.max(0, Math.min(index, Math.max(0, layer.patterns.length - 1)));
+    basePatternIndexByLayerId[layer.id] = safeIndex;
+    basePatternByLayerId[layer.id] = layer.patterns[safeIndex]?.value ?? "~";
   }
 
   const phaseExprs = phases.map((phase) => {
     const spanBars = Math.max(1, phase.end - phase.start + 1);
     if (phase.gap) {
-      return `silence.slow(${spanBars})`;
+      return repeatExpr("silence", spanBars);
     }
 
     const lines: string[] = [];
@@ -316,20 +329,22 @@ export function buildCode(template: TemplateDefinition, input: BuildInput): stri
       }
       let pattern = basePatternByLayerId[layer.id] ?? "~";
       if (rotatePatterns && layer.patterns.length > 0) {
-        pattern = layer.patterns[phase.phaseIndex % layer.patterns.length].value;
+        const startOffset = basePatternIndexByLayerId[layer.id] ?? 0;
+        const rotateIndex = (startOffset + phase.phaseIndex) % layer.patterns.length;
+        pattern = layer.patterns[rotateIndex].value;
       }
       const mergedBase = mergeLayerBase(layer, phase, runtime);
       lines.push(`    ${renderLayer(layer, pattern, mergedBase, runtime)}`);
     }
 
     if (lines.length === 0) {
-      return `silence.slow(${spanBars})`;
+      return repeatExpr("silence", spanBars);
     }
-    return `stack(\n${lines.join(",\n")}\n  ).slow(${spanBars})`;
+    return repeatExpr(`stack(\n${lines.join(",\n")}\n  )`, spanBars);
   });
 
   if (phaseExprs.length === 0) {
-    phaseExprs.push(`silence.slow(${bars})`);
+    phaseExprs.push(repeatExpr("silence", bars));
   }
 
   const phaseBlocks = phases.map((phase, index) => {
@@ -338,6 +353,7 @@ export function buildCode(template: TemplateDefinition, input: BuildInput): stri
   });
 
   return `setcps(${cps});
+const rep = (n, p) => cat(...Array.from({ length: n }, () => p));
 cat(
   ${phaseBlocks.join(",\n  ")}
 )`;

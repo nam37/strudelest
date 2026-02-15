@@ -93,6 +93,7 @@ export interface BuildInput {
   bars: number;
   params: Record<string, TemplateParamValue>;
   seed: string;
+  patternSeed?: string;
 }
 
 export interface BuildContext {

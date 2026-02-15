@@ -51,8 +51,8 @@ describe("rules renderer", () => {
       }
     };
     const code = buildCode(template, { bpm: 120, bars: 8, params: {}, seed: "seed-x" });
-    expect((code.match(/\.slow\(4\)/g) ?? []).length).toBe(2);
-    expect(code).not.toContain("silence.slow");
+    expect((code.match(/rep\(4,\s*stack\(/g) ?? []).length).toBe(2);
+    expect(code).not.toContain("silence");
   });
 
   it("fills uncovered bar ranges with silence", () => {
@@ -67,8 +67,8 @@ describe("rules renderer", () => {
       }
     };
     const code = buildCode(template, { bpm: 120, bars: 8, params: {}, seed: "seed-x" });
-    expect(code).toContain("silence.slow(4)");
-    expect((code.match(/\.slow\(2\)/g) ?? []).length).toBe(2);
+    expect(code).toContain("rep(4, silence)");
+    expect((code.match(/rep\(2,\s*stack\(/g) ?? []).length).toBe(2);
   });
 
   it("tiles pct phases deterministically without off-by-one gaps", () => {
@@ -84,10 +84,10 @@ describe("rules renderer", () => {
       }
     };
     const code = buildCode(template, { bpm: 120, bars: 64, params: {}, seed: "seed-x" });
-    expect((code.match(/\.slow\(19\)/g) ?? []).length).toBe(1);
-    expect((code.match(/\.slow\(22\)/g) ?? []).length).toBe(1);
-    expect((code.match(/\.slow\(23\)/g) ?? []).length).toBe(1);
-    expect(code).not.toContain("silence.slow");
+    expect((code.match(/rep\(19,\s*stack\(/g) ?? []).length).toBe(1);
+    expect((code.match(/rep\(22,\s*stack\(/g) ?? []).length).toBe(1);
+    expect((code.match(/rep\(23,\s*stack\(/g) ?? []).length).toBe(1);
+    expect(code).not.toContain("silence");
   });
 
   it("resolves overlaps by advancing phase start to cursor", () => {
@@ -103,9 +103,9 @@ describe("rules renderer", () => {
       }
     };
     const code = buildCode(template, { bpm: 120, bars: 6, params: {}, seed: "seed-x" });
-    expect(code).toContain(".slow(4)");
-    expect(code).toContain(".slow(2)");
-    expect(code).not.toContain("silence.slow");
+    expect(code).toContain("rep(4, stack(");
+    expect(code).toContain("rep(2, stack(");
+    expect(code).not.toContain("silence");
   });
 
   it("applies override precedence to layer base values", () => {
